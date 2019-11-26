@@ -1,6 +1,8 @@
 #include <DxLib.h>
 #include <stdio.h>
 #include "Rect.h"
+#define WIDTH 640
+#define HEIGHT 480
 
 class Player :public Rect {
 	using Rect::Rect;
@@ -9,6 +11,18 @@ public:
 	void update() {
 		Rect::update();
 		key();
+		if (x < 0) {
+			x = 0; veloX = 0;
+		}
+		if (x + width > WIDTH) {
+			x = WIDTH - width; veloX = 0;
+		}
+		if (y < 0) {
+			y = 0; veloY = 0;
+		}
+		if (y + height > HEIGHT) {
+			y = HEIGHT - height; veloY = 0;
+		}
 	}
 	void draw() {
 		DrawBox(x, y, x + width, y + height, color, true);
@@ -38,7 +52,7 @@ public:
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	ChangeWindowMode(TRUE);//非全画面にセット
-	SetGraphMode(640, 480, 32);//画面サイズ指定
+	SetGraphMode(WIDTH, HEIGHT, 32);//画面サイズ指定
 	SetOutApplicationLogValidFlag(FALSE);//Log.txtを生成しないように設定
 	if (DxLib_Init() == 1) { return -1; }//初期化に失敗時にエラーを吐かせて終了
 
