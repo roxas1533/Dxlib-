@@ -13,7 +13,7 @@ public:
 		isDead = false;
 	}
 	void draw() {
-		DrawCircle(x, y,width, 0x6666FF, true);
+		DrawCircle(x, y, width, 0x6666FF, true);
 	}
 	void update() {
 		Rect::update();
@@ -24,7 +24,23 @@ public:
 		veloY = PtoC(r, angle).y;
 	}
 };
+class Enemy :public Rect {
+public:
+	bool isDead;
+	Enemy(int x, int y, int w, int h) :Rect(x, y, w, h, 0xFF4444) {
+		veloY = GetRand(70) / 10.0 + 1.0;
+		isDead = false;
+	}
+	void draw() {
+		DrawBox(x, y, x+width, y+height, color, true);
+	}
+	void update() {
+		Rect::update();
+		if (y > HEIGHT)isDead = true;
+	}
+};
 std::vector<Bullet> bullets;
+std::vector<Enemy> enemys;
 int time = 0;
 class Player :public Rect {
 	using Rect::Rect;
@@ -75,12 +91,13 @@ public:
 
 	void shot() {
 		for (int i = 0; i < 2; i++) {
-			Bullet b(x+i*25+5, y, 5, 5, 0xFFFF00);
+			Bullet b(x + i * 25 + 5, y, 5, 5, 0xFFFF00);
 			b.setVelocity(10, 270);
 			bullets.push_back(b);
 		}
 	}
 };
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -96,7 +113,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ClearDrawScreen();//— ‰æ–ÊÁ‚·
 		SetDrawScreen(DX_SCREEN_BACK);//•`‰ææ‚ð— ‰æ–Ê‚É
 		time++;
-		std::vector<Bullet>::iterator it =bullets.begin();
+		if (time % 30 == 0) {
+			enemys.push_back(Enemy(GetRand(WIDTH), -20, 20, 20));
+		}
+		std::vector<Bullet>::iterator it = bullets.begin();
 		while (it != bullets.end()) {
 			it->update();
 			it->draw();
@@ -104,6 +124,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				it = bullets.erase(it);
 			}
 			else ++it;
+		}
+		std::vector<Enemy>::iterator ene = enemys.begin();
+		while (ene != enemys.end()) {
+			ene->update();
+			ene->draw();
+			if (ene->isDead) {
+				ene = enemys.erase(ene);
+			}
+			else ++ene;
 		}
 		player.update();
 		player.draw();
