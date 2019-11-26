@@ -1,9 +1,31 @@
 #include <DxLib.h>
 #include <stdio.h>
+#include<vector>
 #include "Rect.h"
+#include "game.h"
 #define WIDTH 640
 #define HEIGHT 480
 
+class Bullet :public Rect {
+public:
+	bool isDead;
+	Bullet(int x, int y, int w, int h, int c) :Rect(x, y, w, h, c) {
+		isDead = false;
+	}
+	void draw() {
+		DrawCircle(x, y,width, 0x6666FF, true);
+	}
+	void update() {
+		Rect::update();
+		if (x<0 || x + width>WIDTH || y<0 || y + height>HEIGHT)isDead = true;
+	}
+	void setVelocity(float r, float angle) {
+		veloX = PtoC(r, angle).x;
+		veloY = PtoC(r, angle).y;
+	}
+};
+std::vector<Bullet> bullets;
+int time = 0;
 class Player :public Rect {
 	using Rect::Rect;
 	const float playerSpeed = 5;
@@ -46,6 +68,17 @@ public:
 		if (!CheckHitKey(KEY_INPUT_UP) && !CheckHitKey(KEY_INPUT_DOWN)) {
 			veloY = 0;
 		}
+		if (CheckHitKey(KEY_INPUT_Z) && time % 6 == 0) {
+			shot();
+		}
+	}
+
+	void shot() {
+		for (int i = 0; i < 2; i++) {
+			Bullet b(x+i*25+5, y, 5, 5, 0xFFFF00);
+			b.setVelocity(10, 270);
+			bullets.push_back(b);
+		}
 	}
 };
 
@@ -62,6 +95,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		ClearDrawScreen();//裏画面消す
 		SetDrawScreen(DX_SCREEN_BACK);//描画先を裏画面に
+		time++;
+		std::vector<Bullet>::iterator it =bullets.begin();
+		while (it != bullets.end()) {
+			it->update();
+			it->draw();
+			if (it->isDead) {
+				it = bullets.erase(it);
+			}
+			else ++it;
+		}
 		player.update();
 		player.draw();
 		ScreenFlip();//裏画面を表画面にコピー
