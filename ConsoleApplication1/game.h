@@ -21,3 +21,9 @@ Vector2 PtoC(double s, double angle) {
 	Vector2 v(s * cos(toRad(angle)), s * sin(toRad(angle)));
 	return v;
 }
+
+//collision
+bool collison(Rect p, Rect q) {
+	if (p.x <= q.x + q.width && q.x <= p.x + p.width && p.y <= q.y + q.height && q.y <= p.y + p.height)return true;
+	return false;
+}

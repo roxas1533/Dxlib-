@@ -26,17 +26,19 @@ public:
 };
 class Enemy :public Rect {
 public:
+	int hp;
 	bool isDead;
 	Enemy(int x, int y, int w, int h) :Rect(x, y, w, h, 0xFF4444) {
 		veloY = GetRand(70) / 10.0 + 1.0;
 		isDead = false;
+		hp = 10;
 	}
 	void draw() {
 		DrawBox(x, y, x+width, y+height, color, true);
 	}
 	void update() {
 		Rect::update();
-		if (y > HEIGHT)isDead = true;
+		if (y > HEIGHT|| hp <= 0)isDead = true;
 	}
 };
 std::vector<Bullet> bullets;
@@ -120,6 +122,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		while (it != bullets.end()) {
 			it->update();
 			it->draw();
+			for (auto&& x : enemys) {
+				if (collison(x, *it)) {
+					it->isDead=true;
+					x.hp--;
+				}
+			}
 			if (it->isDead) {
 				it = bullets.erase(it);
 			}
