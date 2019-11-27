@@ -5,25 +5,30 @@
 #include "game.h"
 #define WIDTH 640
 #define HEIGHT 480
+#include<memory>
 
 class Bullet :public Rect {
 public:
+	int attack;
 	bool isDead;
 	Bullet(int x, int y, int w, int h, int c) :Rect(x, y, w, h, c) {
 		isDead = false;
+		attack = 1;
 	}
-	void draw() {
+	virtual void draw() {
 		DrawCircle(x, y, width, 0x6666FF, true);
 	}
 	void update() {
 		Rect::update();
 		if (x<0 || x + width>WIDTH || y<0 || y + height>HEIGHT)isDead = true;
 	}
-	void setVelocity(float r, float angle) {
+	virtual void setVelocity(float r, float angle) {
 		veloX = PtoC(r, angle).x;
 		veloY = PtoC(r, angle).y;
 	}
 };
+class Bullet2;
+std::vector< std::shared_ptr<Bullet>> bullets;
 class Enemy :public Rect {
 public:
 	int hp;
@@ -34,15 +39,70 @@ public:
 		hp = 10;
 	}
 	void draw() {
-		DrawBox(x, y, x+width, y+height, color, true);
+		DrawBox(x, y, x + width, y + height, color, true);
 	}
 	void update() {
 		Rect::update();
-		if (y > HEIGHT|| hp <= 0)isDead = true;
+		if (y > HEIGHT - 100 || hp <= 0)isDead = true;
 	}
 };
-std::vector<Bullet> bullets;
-std::vector<Enemy> enemys;
+std::vector< std::shared_ptr<Enemy>> enemys;
+class Bullet2 :public Bullet {
+public:
+	float angle;
+	float r;
+	long long id = -1;
+	const Rect* target;
+	Bullet2(int x, int y, int w, int h, int c) :Bullet(x, y, w, h, c) {
+		angle = 0;
+		this->r = 0;
+		target = nullptr;
+		attack = 10;
+	}
+	void draw() {
+		DrawCircle(x, y, width, 0x6666FF, true);
+	}
+
+	void update() override {
+		if (target == nullptr) {
+			int size = enemys.size() - 1;
+			for (auto&& x : enemys) {
+				target = &(*enemys[GetRand(size)]);
+			}
+			id = (target!=nullptr)?target->id:-1;
+		}
+		else if(target->id!=id) {
+			int size = enemys.size() - 1;
+			for (auto&& x : enemys) {
+				target = &(*enemys[GetRand(size)]);
+			}
+			id = target->id;
+
+		}
+		Vector2 t(500,500);
+		int ang = 10;
+		if (target != nullptr) {
+			t = Vector2(double(target->x)+target->width/2, double(target->y)+ target->height / 2);
+			ang = 10;
+		}
+		Vector2 vec = Vector2(x, y) - t;
+		Vector2 vec2 = Vector2(x, y) - Vector2(x + PtoC(50, angle).x, y + PtoC(50, angle).y);
+		
+		if (Cross(vec, vec2) < 0)
+			angle+=ang;
+		else if(Cross(vec, vec2) > 0)
+			angle-=ang;
+		setVelocity(r, angle);
+		 Bullet::update();
+	}
+
+	void setVelocity(float r, float angle) {
+		Bullet::setVelocity(r, angle);
+		this->angle = angle;
+		this->r = r;
+	}
+};
+
 int time = 0;
 class Player :public Rect {
 	using Rect::Rect;
@@ -89,17 +149,25 @@ public:
 		if (CheckHitKey(KEY_INPUT_Z) && time % 6 == 0) {
 			shot();
 		}
+		if (CheckHitKey(KEY_INPUT_X) && time % 7 == 0) {
+			shot2();
+		}
 	}
 
 	void shot() {
 		for (int i = 0; i < 2; i++) {
-			Bullet b(x + i * 25 + 5, y, 5, 5, 0xFFFF00);
-			b.setVelocity(10, 270);
+			std::shared_ptr<Bullet> b(new Bullet(x + i * 25 + 5, y, 5, 5, 0xFFFF00));
+			b->setVelocity(10, 270);
 			bullets.push_back(b);
+			//delete(b);
 		}
 	}
+	void shot2() {
+		std::shared_ptr<Bullet2> b(new Bullet2(x + width / 2, y, 5, 5, 0xFFFF00));
+		b->setVelocity(10, 270);
+		bullets.push_back(b);
+	}
 };
-
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -115,29 +183,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ClearDrawScreen();//ó†âÊñ è¡Ç∑
 		SetDrawScreen(DX_SCREEN_BACK);//ï`âÊêÊÇó†âÊñ Ç…
 		time++;
-		if (time % 30 == 0) {
-			enemys.push_back(Enemy(GetRand(WIDTH), -20, 20, 20));
+		if (time % 5 == 0) {
+			std::shared_ptr <Enemy> b(new Enemy(GetRand(WIDTH), -20, 20, 20));
+			enemys.push_back(b);
 		}
-		std::vector<Bullet>::iterator it = bullets.begin();
+		std::vector<std::shared_ptr<Bullet>>::iterator it = bullets.begin();
 		while (it != bullets.end()) {
-			it->update();
-			it->draw();
+			(*it)->update();
+			(*it)->draw();
 			for (auto&& x : enemys) {
-				if (collison(x, *it)) {
-					it->isDead=true;
-					x.hp--;
+				if (collison((*x), **it)) {
+					(*it)->isDead = true;
+					(*(&x))->hp-=(*it)->attack;
 				}
 			}
-			if (it->isDead) {
+			if ((*it)->isDead) {
 				it = bullets.erase(it);
 			}
 			else ++it;
 		}
-		std::vector<Enemy>::iterator ene = enemys.begin();
+		std::vector< std::shared_ptr<Enemy>>::iterator ene = enemys.begin();
 		while (ene != enemys.end()) {
-			ene->update();
-			ene->draw();
-			if (ene->isDead) {
+			(*ene)->update();
+			(*ene)->draw();
+			if ((*ene)->isDead) {
 				ene = enemys.erase(ene);
 			}
 			else ++ene;

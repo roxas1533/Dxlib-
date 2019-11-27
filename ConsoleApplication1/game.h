@@ -6,7 +6,15 @@ public:
 	double x;
 	double y;
 	Vector2(double x, double y) :x(x), y(y) {}
+
 };
+Vector2 operator -(const Vector2& x, const Vector2& y) {
+	return Vector2(x.x - y.x, x.y - y.y);
+}
+
+float Cross(Vector2 a,Vector2 b) {
+	return (a.x * b.y) - (a.y * b.x);
+}
 
 double toRad(double degree) {
 	return degree * PI / 180.0;
