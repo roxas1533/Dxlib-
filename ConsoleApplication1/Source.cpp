@@ -119,8 +119,9 @@ public:
 int time = 0;
 int count = 0;
 class Player :public Rect {
-	using Rect::Rect;
 	const float playerSpeed = 5;
+	using Rect::Rect;
+	int hormingTime;
 public:
 	void update() {
 		Rect::update();
@@ -136,6 +137,11 @@ public:
 		}
 		if (y + height > HEIGHT) {
 			y = HEIGHT - height; veloY = 0;
+		}
+		if (hormingTime > 0) {
+			hormingTime--;
+			if(time%25==0)
+			shot2();
 		}
 	}
 	void draw() {
@@ -163,8 +169,9 @@ public:
 		if (CheckHitKey(KEY_INPUT_Z) && time % 6 == 0) {
 			shot();
 		}
-		if (CheckHitKey(KEY_INPUT_X) && time % 16 == 0) {
-			shot2();
+		if (CheckHitKey(KEY_INPUT_X) &&count==10) {
+			hormingTime = 50;
+			count = 0;
 		}
 	}
 
