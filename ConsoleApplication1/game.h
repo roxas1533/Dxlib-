@@ -1,5 +1,6 @@
 #pragma once
 #include<math.h>
+#include"Rect.h"
 #define PI 3.141592653589793
 enum DRAWTYPE
 {
@@ -52,11 +53,8 @@ public:
 	}
 
 	void draw() {
-		//SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
 		if (type == CIRCLE)DrawCircle(x, y, width, color, true);
 		else DrawBox(x, y, height, width, color, true);
-
-		//SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}
 	void update() {
 	}
@@ -72,9 +70,10 @@ public:
 		Effect::update();
 	}
 	void update() {
+
 		//alpha -= 10;
-		width -= 0.3;
-		height -= 0.3;
-		if (alpha <= 0 || width <= 0)isDead = true;
+		width -= 0.2;
+		height -= 0.2;
+		if (alpha <= 0 || width <= 2)isDead = true;
 	}
 };

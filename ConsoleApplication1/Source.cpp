@@ -1,12 +1,13 @@
 #include <DxLib.h>
 #include <stdio.h>
 #include<vector>
+#include<list>
 #include "Rect.h"
 #include "game.h"
 #define WIDTH 640
 #define HEIGHT 480
 #include<memory>
-std::vector< std::shared_ptr<Effect>> effects;
+std::list< std::shared_ptr<Effect>> effects;
 class Bullet :public Rect {
 public:
 	int attack;
@@ -34,7 +35,7 @@ public:
 	int hp;
 	bool isDead;
 	Enemy(int x, int y, int w, int h) :Rect(x, y, w, h, 0xFF4444) {
-		veloY = GetRand(7)+ 1.0;
+		veloY = GetRand(7) + 1.0;
 		isDead = false;
 		hp = 10;
 	}
@@ -52,8 +53,10 @@ public:
 	float angle;
 	float r;
 	long long id = -1;
+	float lastX;
+	float lastY;
 	const Rect* target;
-	Bullet2(int x, int y, int w, int h, int c) :Bullet(x, y, w, h, c) {
+	Bullet2(int x, int y, int w, int h, int c) :Bullet(x, y, w, h, c), lastX(x), lastY(y) {
 		angle = 0;
 		this->r = 0;
 		target = nullptr;
@@ -70,42 +73,48 @@ public:
 			for (auto&& x : enemys) {
 				target = &(*enemys[GetRand(size)]);
 			}
-			id = (target!=nullptr)?target->id:-1;
+			id = (target != nullptr) ? target->id : -1;
 		}
-		else if(target->id!=id) {
+		else if (target->id != id) {
 			int size = enemys.size() - 1;
 			for (auto&& x : enemys) {
 				target = &(*enemys[GetRand(size)]);
 			}
 			id = target->id;
-
 		}
-		Vector2 t(500,500);
+		Vector2 t(500, 500);
 		int ang = 10;
 		if (target != nullptr) {
-			t = Vector2(double(target->x)+target->width/2, double(target->y)+ target->height / 2);
+			t = Vector2(double(target->x) + target->width / 2, double(target->y) + target->height / 2);
 			ang = 10;
 		}
 		Vector2 vec = Vector2(x, y) - t;
 		Vector2 vec2 = Vector2(x, y) - Vector2(x + PtoC(50, angle).x, y + PtoC(50, angle).y);
-		
-		if (Cross(vec, vec2) < 0)
-			angle+=ang;
-		else if(Cross(vec, vec2) > 0)
-			angle-=ang;
-		setVelocity(r, angle);
-		std::shared_ptr<Trace> b(new Trace((Rect)(*this),CIRCLE));
-		effects.push_back(b);
-		 Bullet::update();
-	}
 
+		if (Cross(vec, vec2) < 0)
+			angle += ang;
+		else if (Cross(vec, vec2) > 0)
+			angle -= ang;
+		setVelocity(r, angle);
+		Bullet::update();
+		for (int i = 0; i <= 4; i++) {
+			setXY(4,i);
+		}
+
+		lastX = x;
+		lastY = y;
+	}
+	void setXY(int n,int m) {
+		Rect r((x * n+ lastX *m) / (n+m) + width / 2, (y * n + lastY * m) / (n + m), width, height, color);
+		std::shared_ptr<Trace> b(new Trace(r, CIRCLE));
+		effects.push_back(b);
+	}
 	void setVelocity(float r, float angle) {
 		Bullet::setVelocity(r, angle);
 		this->angle = angle;
 		this->r = r;
 	}
 };
-
 
 int time = 0;
 class Player :public Rect {
@@ -153,7 +162,7 @@ public:
 		if (CheckHitKey(KEY_INPUT_Z) && time % 6 == 0) {
 			shot();
 		}
-		if (CheckHitKey(KEY_INPUT_X) && time % 1 == 0) {
+		if (CheckHitKey(KEY_INPUT_X) && time % 16 == 0) {
 			shot2();
 		}
 	}
@@ -163,13 +172,14 @@ public:
 			std::shared_ptr<Bullet> b(new Bullet(x + i * 25 + 5, y, 5, 5, 0xFFFF00));
 			b->setVelocity(10, 270);
 			bullets.push_back(b);
-			//delete(b);
 		}
 	}
 	void shot2() {
-		std::shared_ptr<Bullet2> b(new Bullet2(x + width / 2, y, 5, 5, 0xFFFF00));
-		b->setVelocity(10, GetRand(90)+45);
-		bullets.push_back(b);
+		for (int i = 0; i < 10; i++) {
+			std::shared_ptr<Bullet2> b(new Bullet2(x + width / 2, y, 5, 5, 0xFFFF00));
+			b->setVelocity(10, GetRand(90) + 45);
+			bullets.push_back(b);
+		}
 	}
 };
 
@@ -198,7 +208,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			for (auto&& x : enemys) {
 				if (collison((*x), **it)) {
 					(*it)->isDead = true;
-					(*(&x))->hp-=(*it)->attack;
+					(*(&x))->hp -= (*it)->attack;
 				}
 			}
 			if ((*it)->isDead) {
@@ -215,7 +225,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else ++ene;
 		}
-		std::vector< std::shared_ptr<Effect>>::iterator itr = effects.begin();
+		SetDrawBlendMode(DX_BLENDMODE_ADD, 255);
+		std::list< std::shared_ptr<Effect>>::iterator itr = effects.begin();
 		while (itr != effects.end()) {
 			(*itr)->update();
 			(*itr)->draw();
@@ -224,6 +235,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			else ++itr;
 		}
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 		player.update();
 		player.draw();
 		ScreenFlip();//裏画面を表画面にコピー
