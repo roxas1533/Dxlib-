@@ -5,8 +5,8 @@ class Rect
 public:
 	float x;
 	float y;
-	int width;
-	int height;
+	float width;
+	float height;
 	float veloX;
 	float veloY;
 	int color;

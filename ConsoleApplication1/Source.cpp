@@ -6,7 +6,7 @@
 #define WIDTH 640
 #define HEIGHT 480
 #include<memory>
-
+std::vector< std::shared_ptr<Effect>> effects;
 class Bullet :public Rect {
 public:
 	int attack;
@@ -34,7 +34,7 @@ public:
 	int hp;
 	bool isDead;
 	Enemy(int x, int y, int w, int h) :Rect(x, y, w, h, 0xFF4444) {
-		veloY = GetRand(70) / 10.0 + 1.0;
+		veloY = GetRand(7)+ 1.0;
 		isDead = false;
 		hp = 10;
 	}
@@ -43,7 +43,7 @@ public:
 	}
 	void update() {
 		Rect::update();
-		if (y > HEIGHT - 100 || hp <= 0)isDead = true;
+		if (y > HEIGHT || hp <= 0)isDead = true;
 	}
 };
 std::vector< std::shared_ptr<Enemy>> enemys;
@@ -58,9 +58,10 @@ public:
 		this->r = 0;
 		target = nullptr;
 		attack = 10;
+		color = 0x6666FF;
 	}
 	void draw() {
-		DrawCircle(x, y, width, 0x6666FF, true);
+		DrawCircle(x, y, width, color, true);
 	}
 
 	void update() override {
@@ -93,6 +94,8 @@ public:
 		else if(Cross(vec, vec2) > 0)
 			angle-=ang;
 		setVelocity(r, angle);
+		std::shared_ptr<Trace> b(new Trace((Rect)(*this),CIRCLE));
+		effects.push_back(b);
 		 Bullet::update();
 	}
 
@@ -102,6 +105,7 @@ public:
 		this->r = r;
 	}
 };
+
 
 int time = 0;
 class Player :public Rect {
@@ -149,7 +153,7 @@ public:
 		if (CheckHitKey(KEY_INPUT_Z) && time % 6 == 0) {
 			shot();
 		}
-		if (CheckHitKey(KEY_INPUT_X) && time % 7 == 0) {
+		if (CheckHitKey(KEY_INPUT_X) && time % 1 == 0) {
 			shot2();
 		}
 	}
@@ -164,7 +168,7 @@ public:
 	}
 	void shot2() {
 		std::shared_ptr<Bullet2> b(new Bullet2(x + width / 2, y, 5, 5, 0xFFFF00));
-		b->setVelocity(10, 270);
+		b->setVelocity(10, GetRand(90)+45);
 		bullets.push_back(b);
 	}
 };
@@ -183,7 +187,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ClearDrawScreen();//ó†âÊñ è¡Ç∑
 		SetDrawScreen(DX_SCREEN_BACK);//ï`âÊêÊÇó†âÊñ Ç…
 		time++;
-		if (time % 5 == 0) {
+		if (time % 10 == 0) {
 			std::shared_ptr <Enemy> b(new Enemy(GetRand(WIDTH), -20, 20, 20));
 			enemys.push_back(b);
 		}
@@ -210,6 +214,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				ene = enemys.erase(ene);
 			}
 			else ++ene;
+		}
+		std::vector< std::shared_ptr<Effect>>::iterator itr = effects.begin();
+		while (itr != effects.end()) {
+			(*itr)->update();
+			(*itr)->draw();
+			if ((*itr)->isDead) {
+				itr = effects.erase(itr);
+			}
+			else ++itr;
 		}
 		player.update();
 		player.draw();
