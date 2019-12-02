@@ -98,14 +98,14 @@ public:
 		setVelocity(r, angle);
 		Bullet::update();
 		for (int i = 0; i <= 4; i++) {
-			setXY(4,i);
+			setXY(4, i);
 		}
 
 		lastX = x;
 		lastY = y;
 	}
-	void setXY(int n,int m) {
-		Rect r((x * n+ lastX *m) / (n+m) + width / 2, (y * n + lastY * m) / (n + m), width, height, color);
+	void setXY(int n, int m) {
+		Rect r((x * n + lastX * m) / (n + m) + width / 2, (y * n + lastY * m) / (n + m), width, height, color);
 		std::shared_ptr<Trace> b(new Trace(r, CIRCLE));
 		effects.push_back(b);
 	}
@@ -117,6 +117,7 @@ public:
 };
 
 int time = 0;
+int count = 0;
 class Player :public Rect {
 	using Rect::Rect;
 	const float playerSpeed = 5;
@@ -220,6 +221,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		while (ene != enemys.end()) {
 			(*ene)->update();
 			(*ene)->draw();
+			if ((*ene)->hp <= 0)count < 10 ? count++ : count += 0;
 			if ((*ene)->isDead) {
 				ene = enemys.erase(ene);
 			}
@@ -236,6 +238,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			else ++itr;
 		}
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+		DrawBox(WIDTH - 50, 50, WIDTH - 50 + 30, 50 + 350 - 5, 0, true);
+		for (int i = 0; i < count; i++)DrawBox(WIDTH - 50, 50 + 35 * (9 - i), WIDTH - 50 + 30, 50 + 35 * (9 - i) + 30, count == 10 ? 0xFFFF00 : 0xFF0000, true);
+		DrawBox(WIDTH - 50, 50, WIDTH - 50 + 30, 50 + 350 - 5, 0xFFFFFF, false);
 		player.update();
 		player.draw();
 		ScreenFlip();//裏画面を表画面にコピー
