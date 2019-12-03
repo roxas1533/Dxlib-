@@ -118,6 +118,7 @@ public:
 
 int time = 0;
 int count = 0;
+int score=0;
 class Player :public Rect {
 	const float playerSpeed = 5;
 	using Rect::Rect;
@@ -228,7 +229,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		while (ene != enemys.end()) {
 			(*ene)->update();
 			(*ene)->draw();
-			if ((*ene)->hp <= 0)count < 10 ? count++ : count += 0;
+			if ((*ene)->hp <= 0) {
+				score += (int)(10 * ((*ene)->veloY / 4.0));
+				count < 10 ? count++ : count += 0;
+			}
 			if ((*ene)->isDead) {
 				ene = enemys.erase(ene);
 			}
@@ -250,6 +254,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		DrawBox(WIDTH - 50, 50, WIDTH - 50 + 30, 50 + 350 - 5, 0xFFFFFF, false);
 		player.update();
 		player.draw();
+		DrawFormatString(0, 0, 0xFFFFFF, "SCORE:%05d", score);
 		ScreenFlip();//裏画面を表画面にコピー
 	}
 
